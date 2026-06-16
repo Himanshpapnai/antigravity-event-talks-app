@@ -1035,3 +1035,39 @@ body {
 .toast-info-icon {
     color: var(--primary);
 }
+
+/* FLOATING SCROLL TO TOP */
+.scroll-top-btn {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    z-index: 150;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    visibility: visible;
+    backdrop-filter: blur(8px);
+}
+
+.scroll-top-btn.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(15px);
+}
+
+.scroll-top-btn:hover {
+    border-color: var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 0 15px var(--primary-glow);
+    transform: translateY(-2px);
+}

@@ -18,6 +18,7 @@ const emptyState = document.getElementById('empty-state');
 const retryBtn = document.getElementById('retry-btn');
 const resetFiltersBtn = document.getElementById('reset-filters-btn');
 const exportCsvBtn = document.getElementById('export-csv-btn');
+const scrollTopBtn = document.getElementById('scroll-top-btn');
 
 // Stats Elements
 const countTotal = document.getElementById('count-total');
@@ -117,6 +118,34 @@ function setupEventListeners() {
         
         closeTweetModal();
         showToast('Redirected to Twitter to publish!', 'success');
+    });
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Focus search with '/' key
+        if (e.key === '/' && document.activeElement !== searchInput && document.activeElement !== tweetTextarea) {
+            e.preventDefault();
+            searchInput.focus();
+            showToast('Search input focused', 'info');
+        }
+        
+        // Close modal with 'Escape'
+        if (e.key === 'Escape' && !tweetModal.classList.contains('hidden')) {
+            closeTweetModal();
+        }
+    });
+
+    // Scroll to Top Button Visibility and Action
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 400) {
+            scrollTopBtn.classList.remove('hidden');
+        } else {
+            scrollTopBtn.classList.add('hidden');
+        }
+    });
+
+    scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
 
