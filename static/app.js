@@ -17,6 +17,7 @@ const errorMessage = document.getElementById('error-message');
 const emptyState = document.getElementById('empty-state');
 const retryBtn = document.getElementById('retry-btn');
 const resetFiltersBtn = document.getElementById('reset-filters-btn');
+const exportCsvBtn = document.getElementById('export-csv-btn');
 
 // Stats Elements
 const countTotal = document.getElementById('count-total');
@@ -56,6 +57,7 @@ function setupEventListeners() {
 
     retryBtn.addEventListener('click', fetchReleases);
     resetFiltersBtn.addEventListener('click', resetFilters);
+    exportCsvBtn.addEventListener('click', exportToCsv);
 
     // Search input handler
     searchInput.addEventListener('input', (e) => {
@@ -240,12 +242,18 @@ function renderReleases() {
                 </div>
             </div>
             <div class="card-actions">
-                <button class="tweet-btn" aria-label="Share update on Twitter">
-                    <svg class="tweet-btn-icon" viewBox="0 0 24 24">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                    <span>Tweet This</span>
-                </button>
+                <div class="action-left">
+                    <button class="tweet-btn" aria-label="Share update on Twitter">
+                        <svg class="tweet-btn-icon" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        <span>Tweet This</span>
+                    </button>
+                    <button class="copy-btn" aria-label="Copy update to clipboard">
+                        <span class="material-symbols-outlined btn-small-icon">content_copy</span>
+                        <span>Copy</span>
+                    </button>
+                </div>
                 ${release.link ? `
                     <a href="${release.link}" target="_blank" rel="noopener noreferrer" class="docs-link">
                         <span>Read Docs</span>
@@ -258,6 +266,27 @@ function renderReleases() {
         // Add event listener to share button
         card.querySelector('.tweet-btn').addEventListener('click', () => {
             openTweetModal(release);
+        });
+
+        // Add event listener to copy button
+        card.querySelector('.copy-btn').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const originalHtml = btn.innerHTML;
+            const cleanText = stripHtml(release.content);
+            try {
+                await navigator.clipboard.writeText(cleanText);
+                btn.innerHTML = `
+                    <span class="material-symbols-outlined btn-small-icon text-success">check</span>
+                    <span class="text-success">Copied!</span>
+                `;
+                showToast('Release note copied to clipboard!', 'success');
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                }, 2000);
+            } catch (err) {
+                showToast('Failed to copy to clipboard.', 'error');
+                console.error(err);
+            }
         });
 
         releasesGrid.appendChild(card);
@@ -345,6 +374,41 @@ function updateCharCount() {
 }
 
 // HELPERS
+function exportToCsv() {
+    if (filteredReleases.length === 0) {
+        showToast('No updates available to export.', 'error');
+        return;
+    }
+    
+    const headers = ['Date', 'Type', 'Content', 'Link'];
+    const rows = filteredReleases.map(release => {
+        const cleanContent = stripHtml(release.content).replace(/"/g, '""');
+        return [
+            `"${release.date}"`,
+            `"${release.type}"`,
+            `"${cleanContent}"`,
+            `"${release.link || ''}"`
+        ].join(',');
+    });
+    
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filterStr = currentFilter !== 'all' ? `_${currentFilter}` : '';
+    link.setAttribute('download', `bq_releases${filterStr}_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`Exported ${filteredReleases.length} updates to CSV!`, 'success');
+}
+
 function stripHtml(html) {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
